@@ -186,26 +186,45 @@ overlay_plot =
   ) +
   scale_color_manual(values = c("All samples" = "blue", 
                                  "Rejected samples only" = "red")) +
+  theme_minimal() +
   theme(
     plot.title = element_text(hjust = 0.5)
   ) +
-  theme_minimal() +
   theme(legend.position = "bottom")
 
 
 overlay_plot
 
 ```
-
-
-
-
-
+The sample average of μ_hat for rejected tests is not approximately equal to the true μ for small effect sizes. This is because when μ is small, we only reject when the sample mean happens to be larger than usual, which creates selection bias. When μ is large, nearly all samples are included in the rejected group, selection bias diminishes.
 
 
 ## Problem 3
 
 ```{r}
+# Import data
+homicide_data = read_csv("https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv")
+```
+The data has `r nrow(homicide_data)` observations and `r ncol((homicide_data)` variables.
+
+Variables include `r summary(homicide_data)`.
+
+```{r}
+# Create city_state variable
+homicide_summary = 
+  homicide_data |>
+  mutate(city_state = str_c(city, ",", state)) |>
+  group_by(city_state) |>
+  summarize(
+    total_homicides = n(),
+    unsolved_homicides = sum(disposition %in% c("Closed without arrest", "Open/No arrest")),
+  )
+
+homicide_summary
+```
+
+```{r}
+
 
 
 
