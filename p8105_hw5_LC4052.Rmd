@@ -7,7 +7,7 @@ date: "2025-11-05"
 ```{r}
 library(tidyverse)
 library(rvest)
-library(patchwork)
+library(broom)
 library(dplyr)
 library(ggplot2)
 ```
@@ -72,6 +72,148 @@ bday_sim_results |>
 ```
 When group size is 23, the probability that at least two people share a birthday is approximately 50%. When group size is 50, the probability approaches 100%.
 
-## 
 
+# Problem 2
+
+```{r}
+# Write the function
+sim_mean_sd = function(n = 30, mu = 0, sigma = 5) {
+  
+  x = rnorm(n, mean = mu, sd = sigma)
+  
+  tidy_result = broom::tidy(t.test(x, mu = 0))
+  
+  tibble(
+    mu_hat = tidy_result$estimate,
+    p_value = tidy_result$p.value,
+    reject = tidy_result$p.value < 0.05 
+    )
+}
+
+```
+
+```{r}
+mu_values = c(0, 1, 2, 3, 4, 5, 6)
+set.seed(1)
+
+# Simulation
+sim_results = 
+  tibble(mu = mu_values) |>
+  mutate(
+    output = map(mu, ~map_df(1:5000, function(i) sim_mean_sd(mu = .x)))
+  ) |>
+  unnest(output)
+
+```
+
+```{r}
+# Calculate the power
+power_results = 
+  sim_results |>
+  group_by(mu) |>
+  summarize(
+    power = mean(reject)
+  )
+
+power_results
+
+```
+
+```{r}
+# Draw power plot
+power_plot = 
+  power_results |>
+  ggplot(aes(x = mu, y = power)) +
+  geom_point(size = 3) +
+  geom_line() +
+  labs(
+    title = "Power Analysis: Effect Size vs. Power",
+    x = "True value of μ (effect size)",
+    y = "Power (Proportion of rejections)",
+    caption = "n = 30, σ = 5, α = 0.05, 5000 simulations per μ"
+  ) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    panel.grid.minor = element_blank()
+  )
+
+power_plot
+
+```
+When μ = 0 (null hypothesis is true), the power is approximately 0.05, which equals the Type I error rate α. As the true effect size increases, power increases. The power approaches 1.0 for μ ≥ 4. This indicates that larger effect sizes are substantially easier to detect with statistical tests.
+
+
+```{r}
+# Calculate the two means
+mu_hat_summary = 
+  sim_results |>
+  group_by(mu) |>
+  summarize(
+    avg_mu_hat_all = mean(mu_hat), 
+    avg_mu_hat_rejected = mean(mu_hat[reject])
+  )
+
+mu_hat_summary
+```
+
+```{r}
+# Draw Plot
+mu_hat_long = 
+  mu_hat_summary |>
+  pivot_longer(
+    cols = c(avg_mu_hat_all, avg_mu_hat_rejected),
+    names_to = "sample_type",
+    values_to = "avg_mu_hat"
+  ) |>
+  mutate(
+    sample_type = recode(sample_type,
+                        "avg_mu_hat_all" = "All samples",
+                        "avg_mu_hat_rejected" = "Rejected samples only")
+  )
+
+overlay_plot = 
+  mu_hat_long |>
+  ggplot(aes(x = mu, y = avg_mu_hat, color = sample_type)) +
+  geom_point(size = 3) +
+  geom_line(linewidth = 1) +
+  labs(
+    title = "Comparison of Average μ_hat Estimates",
+    x = "True value of μ",
+    y = "Average estimate μ_hat",
+    color = "Sample Type"
+  ) +
+  scale_color_manual(values = c("All samples" = "blue", 
+                                 "Rejected samples only" = "red")) +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+
+overlay_plot
+
+```
+
+
+
+
+
+
+
+## Problem 3
+
+```{r}
+
+
+
+
+
+
+
+
+
+```
 
