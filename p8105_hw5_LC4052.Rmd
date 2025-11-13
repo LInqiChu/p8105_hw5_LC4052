@@ -208,7 +208,7 @@ homicide_data = read_csv("https://raw.githubusercontent.com/washingtonpost/data-
 ```
 The data has `r nrow(homicide_data)` observations and `r ncol(homicide_data)` variables.
 
-Variables include `r summary(homicide_data)`.
+Variables include `r names(homicide_data)`.
 
 ```{r}
 # Create city_state variable
