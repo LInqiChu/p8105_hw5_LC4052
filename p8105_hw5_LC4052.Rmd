@@ -206,7 +206,7 @@ The sample average of μ_hat for rejected tests is not approximately equal to th
 # Import data
 homicide_data = read_csv("https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv")
 ```
-The data has `r nrow(homicide_data)` observations and `r ncol((homicide_data)` variables.
+The data has `r nrow(homicide_data)` observations and `r ncol(homicide_data)` variables.
 
 Variables include `r summary(homicide_data)`.
 
