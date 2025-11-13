@@ -10,6 +10,7 @@ library(rvest)
 library(broom)
 library(dplyr)
 library(ggplot2)
+library(knitr)
 ```
 
 # Problem 1
@@ -213,25 +214,58 @@ Variables include `r summary(homicide_data)`.
 # Create city_state variable
 homicide_summary = 
   homicide_data |>
-  mutate(city_state = str_c(city, ",", state)) |>
-  group_by(city_state) |>
-  summarize(
-    total_homicides = n(),
-    unsolved_homicides = sum(disposition %in% c("Closed without arrest", "Open/No arrest")),
-  )
+  mutate(city_state = str_c(city, ", ", state))
 
 homicide_summary
 ```
 
+
 ```{r}
+# Summary
+homicide_comparison = 
+  homicide_summary |>
+  group_by(city_state) |>
+  summarize(
+    total_homicides = n(),
+    unsolved_homicides = sum(disposition %in% c("Closed without arrest", "Open/No arrest"))
+  )
 
+homicide_comparison 
+```
 
+```{r}
+# Study the city of Baltimore, MD
+baltimore_data = 
+  homicide_summary |>
+  filter(city_state == "Baltimore, MD")
 
+baltimore_summary = 
+  baltimore_data |>
+  summarize(
+    total_homicides = n(),
+    unsolved_homicides = sum(disposition %in% c("Closed without arrest", "Open/No arrest"))
+  )
 
+## Do the proportion test
+baltimore_prop_test = prop.test(
+  x = baltimore_summary$unsolved_homicides,
+  n = baltimore_summary$total_homicides
+)
 
+baltimore_tidy = broom::tidy(baltimore_prop_test)
 
+## Pull the estimated proportion and CI
+estimate_table =
+  tibble(
+  est_prop = baltimore_tidy |> pull(estimate),
+  `95% CI Lower` = baltimore_tidy |> pull(conf.low),
+  `95% CI Upper` = baltimore_tidy |> pull(conf.high)
+)
 
+kable(estimate_table, caption = "Baltimore Homicide Rate Estimate with 95% CI")
+```
 
+```{r}
 
 
 ```
