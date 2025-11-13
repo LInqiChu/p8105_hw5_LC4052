@@ -219,7 +219,6 @@ homicide_summary =
 homicide_summary
 ```
 
-
 ```{r}
 # Summary
 homicide_comparison = 
@@ -245,8 +244,10 @@ baltimore_summary =
     total_homicides = n(),
     unsolved_homicides = sum(disposition %in% c("Closed without arrest", "Open/No arrest"))
   )
+```
 
-## Do the proportion test
+```{r}
+# Do the proportion test
 baltimore_prop_test = prop.test(
   x = baltimore_summary$unsolved_homicides,
   n = baltimore_summary$total_homicides
@@ -254,7 +255,7 @@ baltimore_prop_test = prop.test(
 
 baltimore_tidy = broom::tidy(baltimore_prop_test)
 
-## Pull the estimated proportion and CI
+# Pull the estimated proportion and CI
 estimate_table =
   tibble(
   est_prop = baltimore_tidy |> pull(estimate),
@@ -266,7 +267,48 @@ kable(estimate_table, caption = "Baltimore Homicide Rate Estimate with 95% CI")
 ```
 
 ```{r}
+# Do the prop test for each cities
+city_prop = 
+  homicide_comparison |>
+  mutate(
+    prop_test_result = 
+      purrr::map2(unsolved_homicides, total_homicides, 
+                            ~prop.test(x = .x, n = .y))
+  ) |>
+  mutate(
+    tidy_result = purrr::map(prop_test_result, broom::tidy)
+  ) |>
+  unnest(tidy_result) |>
+  select(city_state, total_homicides, unsolved_homicides, 
+         estimate, conf.low, conf.high)
 
-
+city_prop
 ```
 
+```{r}
+# Draw a plot
+city_plot = 
+  city_prop |>
+  mutate(city_state = fct_reorder(city_state, estimate)) |>
+  ggplot(aes(x = city_state, y = estimate)) +
+  geom_point(size = 2, color = "steelblue") +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), 
+                width = 0.2,
+                color = "grey",
+                linewidth = 0.5) +
+  coord_flip() +
+  labs(
+    title = "Proportion of Unsolved Homicides by City",
+    subtitle = "With 95% Confidence Intervals",
+    x = NULL,
+    y = "Proportion of Unsolved Homicides"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+city_plot
+```
