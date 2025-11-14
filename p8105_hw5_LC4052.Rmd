@@ -214,7 +214,8 @@ Variables include `r names(homicide_data)`.
 # Create city_state variable
 homicide_summary = 
   homicide_data |>
-  mutate(city_state = str_c(city, ", ", state))
+  mutate(city_state = str_c(city, ", ", state)) |>
+  filter(city_state != "Tulsa, AL")
 
 homicide_summary
 ```
